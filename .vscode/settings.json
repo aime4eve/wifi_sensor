@@ -1,0 +1,8 @@
+{
+    "idf.flashType": "UART",
+    "idf.port": "/dev/tty.SLAB_USBtoUART",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32s3.cfg"
+    ]
+}
