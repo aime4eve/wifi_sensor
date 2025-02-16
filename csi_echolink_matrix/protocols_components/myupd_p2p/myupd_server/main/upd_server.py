@@ -16,6 +16,8 @@
 import socket
 import sys
 import logging
+import os
+import time
 
 
 class Udp_Server:
@@ -24,6 +26,7 @@ class Udp_Server:
         self.ip = ip
         self.port = port
         self.sock = None
+        self.csi_data_file = "csi_data.txt"
 
     def socket_bind(self):
         '''
@@ -68,6 +71,7 @@ class Udp_Server:
                     print('Data:' + data.decode('utf-8'))
                     # 发送接收成功数据
                     self.send_data('Data received successfully', addr)
+
                 except socket.error as msg:
                     print('Recv failed. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1])
                     sys.exit()
@@ -98,9 +102,55 @@ class Udp_Server:
         '''
         self.sock.close()
 
+    def create_csi_data_file(self):
+        '''
+        @brief: create csi data file
+        @param:none
+        @return:none
+        '''
+        try:
+            
+            timestamp = int(time.time() * 1000)  # 精确到毫秒的时间戳
+            self.csi_data_file = f'csi_data_{timestamp}.txt'
+            if os.path.exists(self.csi_data_file):
+                os.remove(self.csi_data_file)
+            with open(self.csi_data_file, 'a') as f:
+                f.write('')
+        except Exception as e:
+            print(f"Error creating csi data file: {e}")
+    
+    def save_csi_data(self, data):
+        '''
+        @brief:save data
+        @param:data: data to save
+        @return:none
+        '''
+        filename = self.csi_data_file
+        
+        # 检查文件是否存在以及大小
+        try:
+            file_size_limit = 10 * 1024 * 1024  # 10MB
+            if os.path.exists(filename):
+                file_size = os.path.getsize(filename)
+                if file_size > file_size_limit:
+                    # 文件超过大小限制，创建新文件
+                    with open(filename, 'a') as f:
+                        f.write(data.decode('utf-8') + '\n')  # 写入数据，添加换行符
+            else:
+                # 文件未超过大小限制，追加数据
+                with open('data.txt', 'a') as f:
+                    f.write(data.decode('utf-8') + '\n')  # 写入数据，添加换行符
+            # 文件不存在，创建新文件并写入数据
+            with open('data.txt', 'a') as f:
+                f.write(data.decode('utf-8') + '\n')  # 写入数据，添加换行符
+        except Exception as e:
+            print(f"Error saving data: {e}")
+
 if __name__ == '__main__':
     try:
-        udp_server = Udp_Server('ipv4', '192.168.99.60', 3333)
+        host_ip = "192.168.3.173"
+        print('Host IP: ' + host_ip)
+        udp_server = Udp_Server('ipv4', host_ip, 6666)
         udp_server.socket_bind()
         udp_server.recv_data()
     except KeyboardInterrupt:
