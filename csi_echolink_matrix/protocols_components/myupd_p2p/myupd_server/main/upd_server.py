@@ -26,7 +26,10 @@ class Udp_Server:
         self.ip = ip
         self.port = port
         self.sock = None
-        self.csi_data_file = "csi_data.txt"
+        self.csi_data_file_name = ""
+        self.file_size_limit = 10 * 1024 * 1024  # 10MB
+        
+        self.recv_csi_raw_data = ""
 
     def socket_bind(self):
         '''
@@ -57,7 +60,7 @@ class Udp_Server:
 
         print('Socket bind complete')
 
-    def recv_data(self):
+    def recv_data(self, action='file'):
         '''
         @brief:recv data
         @param:none
@@ -70,8 +73,12 @@ class Udp_Server:
                     print('Received message from ' + addr[0] + ':' + str(addr[1]))
                     print('Data:' + data.decode('utf-8'))
                     # 发送接收成功数据
-                    self.send_data('Data received successfully', addr)
-
+                    # self.send_data('Data received successfully', addr)
+                    if action == "file":
+                        # 保存csi数据
+                        self.save_csi_data(data)
+                    else:
+                        self.recv_csi_raw_data = data.decode('uft-8')
                 except socket.error as msg:
                     print('Recv failed. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1])
                     sys.exit()
@@ -109,13 +116,26 @@ class Udp_Server:
         @return:none
         '''
         try:
+            if self.csi_data_file_name == "":          
+                timestamp = int(time.time() * 1000)  # 精确到毫秒的时间戳
+                filename = f'csi_data_{timestamp}.txt'
+            else:
+                filename = self.csi_data_file_name
+
+
+            if os.path.exists(filename):
+                file_size = os.path.getsize(filename)
+                if file_size > self.file_size_limit:
+                    # 文件超过大小限制，创建新文件
+                    timestamp = int(time.time() * 1000)  # 精确到毫秒的时间戳
+                    filename = f'csi_data_{timestamp}.txt'
+
+            f = open(filename, 'a', encoding='utf-8')  # 创建文件
+            f.write('')
             
-            timestamp = int(time.time() * 1000)  # 精确到毫秒的时间戳
-            self.csi_data_file = f'csi_data_{timestamp}.txt'
-            if os.path.exists(self.csi_data_file):
-                os.remove(self.csi_data_file)
-            with open(self.csi_data_file, 'a') as f:
-                f.write('')
+            self.csi_data_file_name = filename
+            return f
+
         except Exception as e:
             print(f"Error creating csi data file: {e}")
     
@@ -125,24 +145,12 @@ class Udp_Server:
         @param:data: data to save
         @return:none
         '''
-        filename = self.csi_data_file
         
         # 检查文件是否存在以及大小
         try:
-            file_size_limit = 10 * 1024 * 1024  # 10MB
-            if os.path.exists(filename):
-                file_size = os.path.getsize(filename)
-                if file_size > file_size_limit:
-                    # 文件超过大小限制，创建新文件
-                    with open(filename, 'a') as f:
-                        f.write(data.decode('utf-8') + '\n')  # 写入数据，添加换行符
-            else:
-                # 文件未超过大小限制，追加数据
-                with open('data.txt', 'a') as f:
-                    f.write(data.decode('utf-8') + '\n')  # 写入数据，添加换行符
-            # 文件不存在，创建新文件并写入数据
-            with open('data.txt', 'a') as f:
-                f.write(data.decode('utf-8') + '\n')  # 写入数据，添加换行符
+            csi_file = self.create_csi_data_file()
+            csi_file.write(data.decode('utf-8') + '\n')  # 写入数据，添加换行符
+            csi_file.close()
         except Exception as e:
             print(f"Error saving data: {e}")
 
@@ -152,7 +160,7 @@ if __name__ == '__main__':
         print('Host IP: ' + host_ip)
         udp_server = Udp_Server('ipv4', host_ip, 6666)
         udp_server.socket_bind()
-        udp_server.recv_data()
+        udp_server.recv_data('raw_data')
     except KeyboardInterrupt:
         print('Keyboard interrupt received. Closing socket and exiting.')
         udp_server.close()
