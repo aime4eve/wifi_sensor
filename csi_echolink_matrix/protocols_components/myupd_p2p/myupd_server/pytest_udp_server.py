@@ -16,7 +16,7 @@ except ImportError:
     from run_udp_client import udp_client
 
 
-PORT = 3333
+PORT = 6666
 MESSAGE = 'Data to ESP'
 MAX_RETRIES = 3
 
