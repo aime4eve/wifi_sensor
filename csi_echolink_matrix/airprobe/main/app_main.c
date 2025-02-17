@@ -29,7 +29,7 @@
 
 #include "protocol_examples_common.h"
 
-#include "csi_data_sender.h"
+#include "csi_data_tools.h"
 
 #define CONFIG_SEND_FREQUENCY 100
 
@@ -111,8 +111,8 @@ static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
             if (snprintf_result >= 0 && current_length + snprintf_result < sizeof(csi_values))
             {
                 // printf("%s", csi_values);
-                // echo_csi_data(csi_values); // 调用函数发送 CSI 数据
-                echo_csi_data_mcast(csi_values);// 用组播方式发送 CSI 数据
+                echo_csi_data(csi_values); // 调用函数发送 CSI 数据
+                // echo_csi_data_mcast(csi_values);// 用组播方式发送 CSI 数据
             }
             else
             {
@@ -175,11 +175,11 @@ static esp_err_t wifi_ping_router_start()
     if (ping_start_result != ESP_OK)
     {
         ESP_LOGE(TAG, "Ping start failed, reconnecting Wi-Fi...");
-        esp_wifi_disconnect();
-        esp_wifi_connect();
-        wifi_csi_init();
-        vTaskDelay(3000 / portTICK_PERIOD_MS);
-        wifi_ping_router_start();
+        // esp_wifi_disconnect();
+        // esp_wifi_connect();
+        // wifi_csi_init();
+        // vTaskDelay(3000 / portTICK_PERIOD_MS);
+        // wifi_ping_router_start();
     }
 
     return ESP_OK;
