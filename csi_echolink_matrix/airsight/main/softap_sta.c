@@ -31,6 +31,8 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include "csi_data_tools.h"
+
 /* The examples use WiFi configuration that you can set via project configuration menu.
 
    If you'd rather not, just change the below entries to strings with
@@ -338,4 +340,6 @@ void app_main(void)
     if (esp_netif_napt_enable(esp_netif_ap) != ESP_OK) {
         ESP_LOGE(TAG_STA, "NAPT not enabled on the netif: %p", esp_netif_ap);
     }
+
+    recv_csi_data_multicast();
 }
