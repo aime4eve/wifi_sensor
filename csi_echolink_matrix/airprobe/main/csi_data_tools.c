@@ -60,8 +60,8 @@ err:
    return err;
 }
 
-// static esp_err_t esp_send_multicast(void)
-static int echo_csi_data_mcast(const char *data)
+// AirProbe模块调用
+int echo_csi_data_mcast(const char *data)
 {
    esp_err_t err = ESP_FAIL;
    struct sockaddr_in saddr = {0};
@@ -129,7 +129,8 @@ exit:
    return err;
 }
 
-static int recv_csi_data_multicast(void)
+// AirSight模块调用
+int recv_csi_data_multicast(void)
 {
    esp_err_t err = ESP_FAIL;
    struct sockaddr_in saddr = {0};

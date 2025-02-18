@@ -111,8 +111,8 @@ static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
             if (snprintf_result >= 0 && current_length + snprintf_result < sizeof(csi_values))
             {
                 // printf("%s", csi_values);
-                echo_csi_data(csi_values); // 调用函数发送 CSI 数据
-                // echo_csi_data_mcast(csi_values);// 用组播方式发送 CSI 数据
+                // echo_csi_data(csi_values); // 调用函数发送 CSI 数据
+                echo_csi_data_mcast(csi_values);// 用组播方式发送 CSI 数据
             }
             else
             {
