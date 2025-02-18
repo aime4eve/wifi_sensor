@@ -1,2 +1,2 @@
-idf_component_register(SRCS "csi_data_tools.c" "softap_sta.c"
+idf_component_register(SRCS "air_sight_main.c"
                     INCLUDE_DIRS ".")

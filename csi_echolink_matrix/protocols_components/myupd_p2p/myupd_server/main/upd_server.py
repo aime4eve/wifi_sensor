@@ -156,9 +156,9 @@ class Udp_Server:
 
 if __name__ == '__main__':
     try:
-        host_ip = "192.168.3.173"
+        host_ip = "192.168.4.1"
         print('Host IP: ' + host_ip)
-        udp_server = Udp_Server('ipv4', host_ip, 6666)
+        udp_server = Udp_Server('ipv4', host_ip, 3333)
         udp_server.socket_bind()
         udp_server.recv_data('raw_data')
     except KeyboardInterrupt:
