@@ -21,7 +21,7 @@
 #define ECHO_SERVER_PORT 3333
 #define MULTICAST_TTL 1
 
-static const char *TAG = "EchoCSI";
+static const char *TAG = "AirProbe_echo";
 
 
 
@@ -198,7 +198,7 @@ esp_err_t echo_csi_data(const char *data)
 
     esp_netif_ip_info_t local_ip;
     esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &local_ip);
-    ESP_LOGI(TAG, "got ip:" IPSTR ", gw: " IPSTR, IP2STR(&local_ip.ip), IP2STR(&local_ip.gw));
+   //  ESP_LOGI(TAG, "got ip:" IPSTR ", gw: " IPSTR, IP2STR(&local_ip.ip), IP2STR(&local_ip.gw));
     char ip_str[16];
     esp_ip4addr_ntoa((const esp_ip4_addr_t*)&local_ip.gw.addr, ip_str, sizeof(ip_str));
 

@@ -21,6 +21,7 @@
 #include "esp_wifi.h"
 #include "esp_netif.h"
 #include "esp_now.h"
+#include "esp_chip_info.h"
 
 #include "lwip/inet.h"
 #include "lwip/netdb.h"
@@ -56,14 +57,19 @@ static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
         return;
     }
 
-    static int s_count = 0; // 静态计数器，用于记录接收到的 CSI 数据包的数量
+    // static int s_count = 0; // 静态计数器，用于记录接收到的 CSI 数据包的数量
+    static int s_version = 0;                           // 静态芯片版本号
     const wifi_pkt_rx_ctrl_t *rx_ctrl = &info->rx_ctrl; // 指向接收控制信息的指针
 
     // 打印 CSI 数据的头部信息，只在第一次接收到数据时打印
-    if (!s_count)
+    // if (!s_count)
+    if (!s_version)
     {
         ESP_LOGI(TAG, "================ CSI RECV ================");
         ets_printf("type,seq,mac,rssi,rate,sig_mode,mcs,bandwidth,smoothing,not_sounding,aggregation,stbc,fec_coding,sgi,noise_floor,ampdu_cnt,channel,secondary_channel,local_timestamp,ant,sig_len,rx_state,len,first_word,data\n");
+        esp_chip_info_t Esp_Info;
+        esp_chip_info(&Esp_Info);
+        s_version = Esp_Info.revision;
     }
 
     /** Only LLTF sub-carriers are selected. */
@@ -73,7 +79,8 @@ static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
     char server_mac_str[18];
     // 格式化 CSI 数据为字符串
     int snprintf_result = snprintf(csi_values, sizeof(csi_values), "CSI_DATA,%d," MACSTR ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
-                                   s_count++, MAC2STR(info->mac), rx_ctrl->rssi, rx_ctrl->rate, rx_ctrl->sig_mode,
+                                   s_version, // s_count++,
+                                   MAC2STR(info->mac), rx_ctrl->rssi, rx_ctrl->rate, rx_ctrl->sig_mode,
                                    rx_ctrl->mcs, rx_ctrl->cwb, rx_ctrl->smoothing, rx_ctrl->not_sounding,
                                    rx_ctrl->aggregation, rx_ctrl->stbc, rx_ctrl->fec_coding, rx_ctrl->sgi,
                                    rx_ctrl->noise_floor, rx_ctrl->ampdu_cnt, rx_ctrl->channel, rx_ctrl->secondary_channel,
@@ -107,12 +114,12 @@ static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
             }
 
             // 添加字符串的结束符号
-            snprintf_result = snprintf(csi_values + current_length, sizeof(csi_values) - current_length, "]\"\n");
+            snprintf_result = snprintf(csi_values + current_length, sizeof(csi_values) - current_length, "]\"");
             if (snprintf_result >= 0 && current_length + snprintf_result < sizeof(csi_values))
             {
                 // printf("%s", csi_values);
-                // echo_csi_data(csi_values); // 调用函数发送 CSI 数据
-                echo_csi_data_mcast(csi_values);// 用组播方式发送 CSI 数据
+                echo_csi_data(csi_values); // 调用函数发送 CSI 数据
+                // echo_csi_data_mcast(csi_values);// 用组播方式发送 CSI 数据
             }
             else
             {
