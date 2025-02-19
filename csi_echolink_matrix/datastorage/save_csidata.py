@@ -18,7 +18,8 @@ import sys
 import logging
 import os
 import time
-
+from config import *
+from tools import *
 
 class Udp_Server:
     def __init__(self, ip_type, ip, port):
@@ -27,7 +28,7 @@ class Udp_Server:
         self.port = port
         self.sock = None
         self.csi_data_file_name = ""
-        self.file_size_limit = 10 * 1024 * 1024  # 10MB
+        self.file_size_limit = 1 * 1024 * 1024  # 1MB
         
         self.recv_csi_raw_data = ""
 
@@ -49,13 +50,16 @@ class Udp_Server:
                 print("ip_type error")
                 sys.exit()
         except socket.error as msg:
-            print('Failed to create socket. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1])
+            print(f'Failed to create socket. Error Info: {msg}')
             sys.exit()
 
         try:
             self.sock.bind((self.ip, self.port))
+            # 设置非阻塞模式
+            # self.sock.setblocking(False)
+
         except socket.error as msg:
-            print('Bind failed. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1])
+            print(f'Bind failed. Error Info: {msg}')
             sys.exit()
 
         print('Socket bind complete')
@@ -68,20 +72,26 @@ class Udp_Server:
         '''
         try:
             while True:
+                time.sleep(1)
                 try:
                     data, addr = self.sock.recvfrom(1024)
                     print('Received message from ' + addr[0] + ':' + str(addr[1]))
-                    print('Data:' + data.decode('utf-8'))
+                    # print('Data:' + data.decode('utf-8'))
                     # 发送接收成功数据
                     # self.send_data('Data received successfully', addr)
                     if action == "file":
                         # 保存csi数据
                         self.save_csi_data(data)
                     else:
-                        self.recv_csi_raw_data = data.decode('uft-8')
+                        self.recv_csi_raw_data = data.decode('utf-8')    
+ 
+                        csi_data_dict = parse_csi_data(self.recv_csi_raw_data)
+                        if len(csi_data_dict) >0 :
+                            print(f'rssi={csi_data_dict['rssi']}')
+                            print(f'csi={csi_data_dict['data']}')
                 except socket.error as msg:
-                    print('Recv failed. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1])
-                    sys.exit()
+                    print(f'Recv failed. Error Info: {msg}')
+                    # sys.exit()
         except KeyboardInterrupt:
             print('Keyboard interrupt received. Closing socket and exiting.')
             self.close()
@@ -122,7 +132,6 @@ class Udp_Server:
             else:
                 filename = self.csi_data_file_name
 
-
             if os.path.exists(filename):
                 file_size = os.path.getsize(filename)
                 if file_size > self.file_size_limit:
@@ -156,11 +165,9 @@ class Udp_Server:
 
 if __name__ == '__main__':
     try:
-        host_ip = "192.168.4.1"
-        print('Host IP: ' + host_ip)
-        udp_server = Udp_Server('ipv4', host_ip, 3333)
+        udp_server = Udp_Server('ipv4', UDP_Server_IP, UDP_Server_Port)
         udp_server.socket_bind()
-        udp_server.recv_data('raw_data')
+        udp_server.recv_data('file')       
     except KeyboardInterrupt:
         print('Keyboard interrupt received. Closing socket and exiting.')
         udp_server.close()
