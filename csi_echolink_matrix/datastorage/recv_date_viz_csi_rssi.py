@@ -32,7 +32,8 @@ def udp_receiver():
     while True:
         try:
             data, addr = sock.recvfrom(4096)
-            print(addr[0])
+            
+            # print(addr[0])
             # if addr[0] != UDP_IP:
             #     continue
                 

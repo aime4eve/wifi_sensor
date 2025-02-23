@@ -31,6 +31,7 @@ class Udp_Server:
         self.file_size_limit = 1 * 1024 * 1024  # 1MB
         
         self.recv_csi_raw_data = ""
+        self.g_r_count = 0
 
     def socket_bind(self):
         '''
@@ -71,11 +72,13 @@ class Udp_Server:
         @return:none
         '''
         try:
+            self.g_r_count = 0
             while True:
-                time.sleep(1)
+                # time.sleep(1)
                 try:
                     data, addr = self.sock.recvfrom(1024)
-                    print('Received message from ' + addr[0] + ':' + str(addr[1]))
+                    self.g_r_count = self.g_r_count + 1
+                    print(f'Received {self.g_r_count} message from {addr[0]} : {addr[1]}')
                     # print('Data:' + data.decode('utf-8'))
                     # 发送接收成功数据
                     # self.send_data('Data received successfully', addr)
@@ -138,6 +141,7 @@ class Udp_Server:
                     # 文件超过大小限制，创建新文件
                     timestamp = int(time.time() * 1000)  # 精确到毫秒的时间戳
                     filename = f'csi_data_{timestamp}.txt'
+                    self.g_r_count = 0
 
             f = open(filename, 'a', encoding='utf-8')  # 创建文件
             f.write('')
