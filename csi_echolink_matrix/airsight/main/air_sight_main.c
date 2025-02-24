@@ -82,9 +82,9 @@ graph LR
 
 // 定义转发目标的 IP 和端口
 // #define FORWARD_IP "192.168.99.55" // 替换为目标 IP
-// // #define FORWARD_IP "192.168.99.107"
 // #define FORWARD_PORT 4444          // 替换为目标端口
-static const char *FORWARD_IPS[] = {"192.168.99.55", "192.168.99.107","192.168.3.173"};
+
+static const char *FORWARD_IPS[] = {"192.168.99.42", "192.168.99.107"};
 // static const char *FORWARD_IPS[] = {"192.168.43.6","192.168.200.2","192.168.200.3"};
 static const int FORWARD_IPS_COUNT = sizeof(FORWARD_IPS) / sizeof(FORWARD_IPS[0]);
 static const int FORWARD_PORT = 4444;
@@ -205,6 +205,7 @@ static void wifi_init() {
 }
 
 // UDP 服务器任务
+
 static void udp_server_task(void *pvParameters) {
 
     // 初始化转发地址（必须在socket创建前调用）
@@ -241,21 +242,38 @@ static void udp_server_task(void *pvParameters) {
 
     ESP_LOGI(TAG, "UDP server started on port %d", UDP_PORT);
 
-    // 创建转发目标的地址结构
-    struct sockaddr_in forward_addr;
-    forward_addr.sin_family = AF_INET;
-    forward_addr.sin_port = htons(FORWARD_PORT);
-    inet_pton(AF_INET, FORWARD_IP, &forward_addr.sin_addr);
+
 
     while (1) {
         // 接收数据
         int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&client_addr, &socklen);
         if (len > 0) {
             rx_buffer[len] = 0; // 添加字符串结束符
-            ESP_LOGI(TAG, "Received data: %s", rx_buffer);
+            // ESP_LOGI(TAG, "Received data: %s", rx_buffer);
+            // 创建转发目标的地址结构
+            // struct sockaddr_in forward_addr;
+            // forward_addr.sin_family = AF_INET;
+            //     forward_addr.sin_port = htons(FORWARD_PORT);
+            // inet_pton(AF_INET, FORWARD_IP, &forward_addr.sin_addr);
+            // // 转发数据到指定 IP 和端口
+            // if (sta_ip.addr != 0) { // 确保 STA 已获取 IP
+            //     int sent = sendto(sock, rx_buffer, len, 0, (struct sockaddr *)&forward_addr, sizeof(forward_addr));
+            //     if (sent < 0) {
+            //         ESP_LOGE(TAG, "Failed to send data to forward target");
+            //     } else {
+            //         ESP_LOGI(TAG, "Forwarded data to %s:%d", FORWARD_IP, FORWARD_PORT);
+            //     }
+            // } else {
+            //     ESP_LOGE(TAG, "STA IP not available, cannot forward data");
+            // }
+            // 获取当前目标地址
 
-            // 转发数据到指定 IP 和端口
-            if (sta_ip.addr != 0) { // 确保 STA 已获取 IP
+
+            // ESP_LOGI(TAG, "Forwarding to [%d/%d] %s:%d,csi data len %d", 
+            //         current_index + 1, FORWARD_IPS_COUNT,
+            //         FORWARD_IPS[current_index], FORWARD_PORT,len);
+
+            if (sta_ip.addr != 0) {
                 // 批量发送到所有目标IP
                 for (int i = 0; i < FORWARD_IPS_COUNT; i++) {
                     struct sockaddr_in *target_addr = &forward_addrs[i];
@@ -270,7 +288,7 @@ static void udp_server_task(void *pvParameters) {
                     } else {
                         // 失败时保留当前索引，下次继续尝试同一IP
                         total_failed++;
-                        ESP_LOGE(TAG, "Retry IP %s in next cycle", FORWARD_IPS[current_forward_index]);
+                        // ESP_LOGE(TAG, "Retry IP %s in next cycle", FORWARD_IPS[current_forward_index]);
                     }
                     xSemaphoreGive(index_mutex);
                 }
@@ -290,6 +308,9 @@ static void udp_server_task(void *pvParameters) {
         }
     }
 
+    // close(sock);
+    // vTaskDelete(NULL);
+    // 清理资源
     free(forward_addrs);
     vSemaphoreDelete(index_mutex);
     close(sock);
